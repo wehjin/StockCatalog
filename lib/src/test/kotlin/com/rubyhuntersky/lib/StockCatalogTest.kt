@@ -24,7 +24,7 @@ class StockCatalogTest {
         val mockNetwork = mock<HttpNetwork> {}
         StockCatalog(mockNetwork).connect(client)
 
-        StockCatalog.Query.FindStock("TSLA").send(client)
+        StockCatalog.Query.FindStock("TSLA").sendToClient(client)
         verify(mockNetwork).request(argWhere {
             it.url == "https://query1.finance.yahoo.com/v7/finance/quote?lang=en-US&region=US&corsDomain=finance.yahoo.com&fields=symbol%2ClongName%2CshortName%2CregularMarketPrice%2CmarketCap%2CsharesOutstanding&symbols=TSLA&formatted=false"
         })
@@ -41,7 +41,7 @@ class StockCatalogTest {
         }
 
         StockCatalog(mockNetwork).connect(client)
-        StockCatalog.Query.FindStock("ERROR").send(client)
+        StockCatalog.Query.FindStock("ERROR").sendToClient(client)
         requestLatch.countDown()
         if (client.resultLatch.await(1, TimeUnit.SECONDS)) {
             assertTrue(client.results.size == 1 && client.results[0] is StockCatalog.Result.NetworkError)
@@ -63,12 +63,12 @@ class StockCatalogTest {
         }
 
         StockCatalog(mockNetwork).connect(client)
-        StockCatalog.Query.FindStock("TSLA").send(client)
-        StockCatalog.Query.Clear.send(client)
+        StockCatalog.Query.FindStock("TSLA").sendToClient(client)
         requestStartedLatch.await()
+        StockCatalog.Query.Clear.sendToClient(client)
         requestEndLatch.countDown()
         Thread.sleep(10)
-        assertEquals(0, client.results.size)
+        assertEquals(emptyList<StockCatalog.Result>(), client.results)
     }
 
     @Test
@@ -90,9 +90,9 @@ class StockCatalogTest {
         }
 
         StockCatalog(mockNetwork).connect(client)
-        StockCatalog.Query.FindStock("ERROR").send(client)
+        StockCatalog.Query.FindStock("ERROR").sendToClient(client)
         request1StartedLatch.await()
-        StockCatalog.Query.FindStock("TSLA").send(client)
+        StockCatalog.Query.FindStock("TSLA").sendToClient(client)
         request2StartedLatch.await()
         requestsEndLatch.countDown()
         if (client.resultLatch.await(1, TimeUnit.SECONDS)) {
