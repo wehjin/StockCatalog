@@ -3,14 +3,17 @@ package com.rubyhuntersky.lib
 import io.reactivex.Single
 import io.reactivex.disposables.Disposable
 import io.reactivex.rxkotlin.subscribeBy
+import io.reactivex.schedulers.Schedulers
 
 interface StockCatalogClient {
     var stockCatalog: StockCatalog
+    fun sendStockCatalogQuery(query: StockCatalog.Query) = stockCatalog.sendQuery(query)
     fun onStockCatalogResult(result: StockCatalog.Result)
-    fun StockCatalog.Query.sendToCatalog() = stockCatalog.sendQuery(this)
 }
 
-class StockCatalog {
+fun StockCatalog.Query.send(client: StockCatalogClient) = client.sendStockCatalogQuery(this)
+
+class StockCatalog(private val network: HttpNetwork) {
 
     sealed class Query {
         object Clear : Query()
@@ -23,18 +26,12 @@ class StockCatalog {
         data class InvalidSymbol(val symbol: String) : Result()
     }
 
-    fun connectClient(client: StockCatalogClient) {
+    fun connect(client: StockCatalogClient) {
         client.stockCatalog = this
         this.client = client
     }
 
     private lateinit var client: StockCatalogClient
-
-    fun connectNetwork(network: HttpNetwork) {
-        this.network = network
-    }
-
-    private lateinit var network: HttpNetwork
 
     fun sendQuery(query: Query) {
         when (query) {
@@ -45,6 +42,8 @@ class StockCatalog {
                     Result.InvalidSymbol(query.symbol).sendToClient()
                 } else {
                     requestDisposable = query.asRequest().toSingle()
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(Schedulers.single())
                         .subscribeBy(
                             onError = {
                                 Result.NetworkError.sendToClient()
@@ -68,12 +67,35 @@ class StockCatalog {
     }
 
     private var requestDisposable: Disposable? = null
-    private fun HttpNetwork.Request.toSingle() = Single.fromCallable { network.request(this) }
+
     private fun Result.sendToClient() = client.onStockCatalogResult(this)
+
     private fun Query.FindStock.asRequest(): HttpNetwork.Request {
-        val url = "?$symbol"
-        // TODO Make a real request
+        val fields = listOf(
+            "symbol",
+            "longName",
+            "shortName",
+            "regularMarketPrice",
+            "marketCap",
+            "sharesOutstanding"
+        ).joinToString("%2C")
+        val params =
+            "lang=en-US&region=US&corsDomain=finance.yahoo.com&fields=$fields&symbols=${symbol.trim()}&formatted=false"
+        val url = "https://query1.finance.yahoo.com/v7/finance/quote?$params"
         return HttpNetwork.Request(url)
+    }
+
+    private fun HttpNetwork.Request.toSingle(): Single<HttpNetwork.Response> = Single.create {
+        try {
+            val response = network.request(this)
+            if (!it.isDisposed) {
+                it.onSuccess(response)
+            }
+        } catch (t: Throwable) {
+            if (!it.isDisposed) {
+                it.onError(t)
+            }
+        }
     }
 }
 
