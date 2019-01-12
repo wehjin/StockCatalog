@@ -7,6 +7,7 @@ import io.reactivex.rxkotlin.subscribeBy
 interface StockCatalogClient {
     var stockCatalog: StockCatalog
     fun onStockCatalogResult(result: StockCatalog.Result)
+    fun StockCatalog.Query.sendToCatalog() = stockCatalog.sendQuery(this)
 }
 
 class StockCatalog {
