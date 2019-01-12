@@ -66,8 +66,8 @@ class StockCatalog {
         }
     }
 
-    private fun HttpNetwork.Request.toSingle() = Single.fromCallable { network.request(this) }
     private var requestDisposable: Disposable? = null
+    private fun HttpNetwork.Request.toSingle() = Single.fromCallable { network.request(this) }
     private fun Result.send() = client.onStockCatalogResult(this)
     private fun Query.FindStock.asRequest(): HttpNetwork.Request {
         val url = "?$symbol"
