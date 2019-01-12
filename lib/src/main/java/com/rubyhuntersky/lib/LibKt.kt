@@ -41,12 +41,12 @@ class StockCatalog {
             is Query.FindStock -> {
                 requestDisposable?.dispose()
                 if (query.symbol.isBlank()) {
-                    Result.InvalidSymbol(query.symbol).send()
+                    Result.InvalidSymbol(query.symbol).sendToClient()
                 } else {
                     requestDisposable = query.asRequest().toSingle()
                         .subscribeBy(
                             onError = {
-                                Result.NetworkError.send()
+                                Result.NetworkError.sendToClient()
                             },
                             onSuccess = { response ->
                                 val result = when (response) {
@@ -57,7 +57,7 @@ class StockCatalog {
                                         Result.NetworkError
                                     }
                                 }
-                                result.send()
+                                result.sendToClient()
                             }
                         )
                 }
@@ -68,7 +68,7 @@ class StockCatalog {
 
     private var requestDisposable: Disposable? = null
     private fun HttpNetwork.Request.toSingle() = Single.fromCallable { network.request(this) }
-    private fun Result.send() = client.onStockCatalogResult(this)
+    private fun Result.sendToClient() = client.onStockCatalogResult(this)
     private fun Query.FindStock.asRequest(): HttpNetwork.Request {
         val url = "?$symbol"
         // TODO Make a real request
