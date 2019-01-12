@@ -13,10 +13,10 @@ class StockCatalogTest {
 
     private val client = object : StockCatalogClient {
         val resultLatch = CountDownLatch(1)
-        val results: MutableList<StockCatalog.Result> = mutableListOf()
+        val results: MutableList<StockCatalogResult> = mutableListOf()
 
         override lateinit var stockCatalog: StockCatalog
-        override fun onStockCatalogResult(result: StockCatalog.Result) {
+        override fun onStockCatalogResult(result: StockCatalogResult) {
             results += result
             resultLatch.countDown()
         }
@@ -49,7 +49,7 @@ class StockCatalogTest {
         val mockNetwork = mock<HttpNetwork> {}
         StockCatalog(mockNetwork).connect(client)
 
-        StockCatalog.Query.FindStock("TSLA").sendToClient(client)
+        StockCatalogQuery.FindStock("TSLA").sendToClient(client)
         verify(mockNetwork).request(check {
             assertEquals(
                 "https://query1.finance.yahoo.com/v7/finance/quote?lang=en-US&region=US&corsDomain=finance.yahoo.com&fields=quoteType%2Csymbol%2ClongName%2CshortName%2CregularMarketPrice%2CmarketCap%2CsharesOutstanding&symbols=TSLA&formatted=false",
@@ -69,10 +69,10 @@ class StockCatalogTest {
         }
 
         StockCatalog(mockNetwork).connect(client)
-        StockCatalog.Query.FindStock("ERROR").sendToClient(client)
+        StockCatalogQuery.FindStock("ERROR").sendToClient(client)
         requestLatch.countDown()
         if (client.resultLatch.await(1, TimeUnit.SECONDS)) {
-            assertTrue(client.results.size == 1 && client.results[0] is StockCatalog.Result.NetworkError)
+            assertTrue(client.results.size == 1 && client.results[0] is StockCatalogResult.NetworkError)
         } else {
             fail("No result")
         }
@@ -91,12 +91,12 @@ class StockCatalogTest {
         }
 
         StockCatalog(mockNetwork).connect(client)
-        StockCatalog.Query.FindStock("TSLA").sendToClient(client)
+        StockCatalogQuery.FindStock("TSLA").sendToClient(client)
         requestStartedLatch.await()
-        StockCatalog.Query.Clear.sendToClient(client)
+        StockCatalogQuery.Clear.sendToClient(client)
         requestEndLatch.countDown()
         Thread.sleep(10)
-        assertEquals(emptyList<StockCatalog.Result>(), client.results)
+        assertEquals(emptyList<StockCatalogResult>(), client.results)
     }
 
     @Test
@@ -118,15 +118,15 @@ class StockCatalogTest {
         }
 
         StockCatalog(mockNetwork).connect(client)
-        StockCatalog.Query.FindStock("ERROR").sendToClient(client)
+        StockCatalogQuery.FindStock("ERROR").sendToClient(client)
         request1StartedLatch.await()
-        StockCatalog.Query.FindStock("TSLA").sendToClient(client)
+        StockCatalogQuery.FindStock("TSLA").sendToClient(client)
         request2StartedLatch.await()
         requestsEndLatch.countDown()
         if (client.resultLatch.await(1, TimeUnit.MINUTES)) {
             assertEquals(1, client.results.size)
             assertEquals(
-                StockCatalog.Result.Samples(
+                StockCatalogResult.Samples(
                     search = "TSLA",
                     samples = listOf(
                         StockSample(

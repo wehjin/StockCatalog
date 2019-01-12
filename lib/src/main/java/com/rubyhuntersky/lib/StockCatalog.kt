@@ -9,22 +9,6 @@ import java.math.BigDecimal
 
 class StockCatalog(private val network: HttpNetwork) {
 
-    sealed class Query {
-        object Clear : Query()
-        data class FindStock(val symbol: String) : Query()
-    }
-
-    sealed class Result {
-
-        data class InvalidSymbol(val symbol: String) : Result()
-        data class NetworkError(val url: String?) : Result()
-        data class ParseError(val text: String, val reason: String? = null) : Result()
-        data class Samples(
-            val search: String,
-            val samples: List<StockSample>
-        ) : Result()
-    }
-
     fun connect(client: StockCatalogClient) {
         client.stockCatalog = this
         this.client = client
@@ -32,26 +16,26 @@ class StockCatalog(private val network: HttpNetwork) {
 
     private lateinit var client: StockCatalogClient
 
-    fun sendQuery(query: Query) {
+    fun sendQuery(query: StockCatalogQuery) {
         queryDisposable?.dispose()
         when (query) {
-            is Query.Clear -> Unit
-            is Query.FindStock -> {
+            is StockCatalogQuery.Clear -> Unit
+            is StockCatalogQuery.FindStock -> {
                 val result = if (query.symbol.isBlank()) {
-                    Single.just(Result.InvalidSymbol(query.symbol))
+                    Single.just(StockCatalogResult.InvalidSymbol(query.symbol))
                 } else {
                     query.asRequest().toSingle()
                         .map { response ->
                             when (response) {
-                                is HttpNetwork.Response.ConnectionError -> Result.NetworkError(response.url)
+                                is HttpNetwork.Response.ConnectionError -> StockCatalogResult.NetworkError(response.url)
                                 is HttpNetwork.Response.Text -> if (response.httpCode != 200) {
-                                    Result.NetworkError(response.url)
+                                    StockCatalogResult.NetworkError(response.url)
                                 } else {
                                     response.text.parseResult(query.symbol)
                                 }
                             }
                         }
-                        .onErrorReturn { Result.NetworkError(it.localizedMessage) }
+                        .onErrorReturn { StockCatalogResult.NetworkError(it.localizedMessage) }
                 }
                 queryDisposable = result.subscribeOn(Schedulers.io()).observeOn(Schedulers.single())
                     .subscribeBy(onSuccess = this::sendToClient)
@@ -62,9 +46,9 @@ class StockCatalog(private val network: HttpNetwork) {
 
     private var queryDisposable: Disposable? = null
 
-    private fun sendToClient(result: Result) = client.onStockCatalogResult(result)
+    private fun sendToClient(result: StockCatalogResult) = client.onStockCatalogResult(result)
 
-    private fun Query.FindStock.asRequest(): HttpNetwork.Request {
+    private fun StockCatalogQuery.FindStock.asRequest(): HttpNetwork.Request {
         val fields = listOf(
             "quoteType",
             "symbol",
@@ -93,11 +77,11 @@ class StockCatalog(private val network: HttpNetwork) {
         }
     }
 
-    private fun String.parseResult(search: String): Result {
+    private fun String.parseResult(search: String): StockCatalogResult {
         try {
             val requestResponse = Klaxon().parse<FinanceRequestResponse>(this)
             return requestResponse?.let { it ->
-                Result.Samples(
+                StockCatalogResult.Samples(
                     search = search,
                     samples = it.quoteResponse.result
                         .map { financeQuote ->
@@ -107,9 +91,9 @@ class StockCatalog(private val network: HttpNetwork) {
                                 marketCapitalization = BigDecimal.valueOf(financeQuote.marketCap)
                             )
                         })
-            } ?: Result.ParseError(text = this)
+            } ?: StockCatalogResult.ParseError(text = this)
         } catch (t: Throwable) {
-            return Result.ParseError(text = this, reason = t.localizedMessage)
+            return StockCatalogResult.ParseError(text = this, reason = t.localizedMessage)
         }
     }
 }
