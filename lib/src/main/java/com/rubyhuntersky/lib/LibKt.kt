@@ -1,20 +1,12 @@
 package com.rubyhuntersky.lib
 
-import io.reactivex.Completable
 import io.reactivex.Single
 import io.reactivex.disposables.Disposable
 import io.reactivex.rxkotlin.subscribeBy
-import io.reactivex.schedulers.Schedulers
 
-
-class StockCatalogClient(private val listener: Listener) {
-    interface Listener {
-        fun onStockCatalogResult(result: StockCatalog.Result)
-    }
-
-    fun sendQuery(query: StockCatalog.Query) = catalog.sendQuery(query)
-    internal lateinit var catalog: StockCatalog
-    internal fun sendResult(result: StockCatalog.Result) = listener.onStockCatalogResult(result)
+interface StockCatalogClient {
+    var stockCatalog: StockCatalog
+    fun onStockCatalogResult(result: StockCatalog.Result)
 }
 
 class StockCatalog {
@@ -30,27 +22,31 @@ class StockCatalog {
         data class InvalidSymbol(val symbol: String) : Result()
     }
 
-    fun connect(catalogClient: StockCatalogClient, network: HttpNetwork) {
-        catalogClient.catalog = this
-        this.catalogClient = catalogClient
+    fun connectClient(client: StockCatalogClient) {
+        client.stockCatalog = this
+        this.client = client
+    }
+
+    private lateinit var client: StockCatalogClient
+
+    fun connectNetwork(network: HttpNetwork) {
         this.network = network
     }
 
-    private lateinit var catalogClient: StockCatalogClient
     private lateinit var network: HttpNetwork
 
-    internal fun sendQuery(query: Query) {
+    fun sendQuery(query: Query) {
         when (query) {
             is Query.Clear -> requestDisposable?.dispose()
             is Query.FindStock -> {
                 requestDisposable?.dispose()
                 if (query.symbol.isBlank()) {
-                    Result.InvalidSymbol(query.symbol).sendDeferred()
+                    Result.InvalidSymbol(query.symbol).send()
                 } else {
                     requestDisposable = query.asRequest().toSingle()
                         .subscribeBy(
                             onError = {
-                                Result.NetworkError.sendDeferred()
+                                Result.NetworkError.send()
                             },
                             onSuccess = { response ->
                                 val result = when (response) {
@@ -61,7 +57,7 @@ class StockCatalog {
                                         Result.NetworkError
                                     }
                                 }
-                                result.sendDeferred()
+                                result.send()
                             }
                         )
                 }
@@ -70,18 +66,9 @@ class StockCatalog {
         }
     }
 
-    private var requestDisposable: Disposable? = null
     private fun HttpNetwork.Request.toSingle() = Single.fromCallable { network.request(this) }
-    private var resultDisposable: Disposable? = null
-    private fun Result.sendDeferred() {
-        resultDisposable?.dispose()
-        resultDisposable = Completable.complete()
-            .subscribeOn(Schedulers.trampoline())
-            .subscribeBy {
-                catalogClient.sendResult(this)
-            }
-    }
-
+    private var requestDisposable: Disposable? = null
+    private fun Result.send() = client.onStockCatalogResult(this)
     private fun Query.FindStock.asRequest(): HttpNetwork.Request {
         val url = "?$symbol"
         // TODO Make a real request
