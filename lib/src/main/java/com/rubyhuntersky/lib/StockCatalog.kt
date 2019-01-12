@@ -1,9 +1,11 @@
 package com.rubyhuntersky.lib
 
+import com.beust.klaxon.Klaxon
 import io.reactivex.Single
 import io.reactivex.disposables.Disposable
 import io.reactivex.rxkotlin.subscribeBy
 import io.reactivex.schedulers.Schedulers
+import java.math.BigDecimal
 
 class StockCatalog(private val network: HttpNetwork) {
 
@@ -13,9 +15,14 @@ class StockCatalog(private val network: HttpNetwork) {
     }
 
     sealed class Result {
-        data class StockData(val symbol: String) : Result()
-        object NetworkError : Result()
+
         data class InvalidSymbol(val symbol: String) : Result()
+        data class NetworkError(val url: String?) : Result()
+        data class ParseError(val text: String, val reason: String? = null) : Result()
+        data class Samples(
+            val search: String,
+            val samples: List<StockSample>
+        ) : Result()
     }
 
     fun connect(client: StockCatalogClient) {
@@ -36,15 +43,15 @@ class StockCatalog(private val network: HttpNetwork) {
                     query.asRequest().toSingle()
                         .map { response ->
                             when (response) {
-                                is HttpNetwork.Response.ConnectionError -> Result.NetworkError
-                                is HttpNetwork.Response.Text -> if (response.httpCode == 200) {
-                                    Result.StockData(symbol = query.symbol)
+                                is HttpNetwork.Response.ConnectionError -> Result.NetworkError(response.url)
+                                is HttpNetwork.Response.Text -> if (response.httpCode != 200) {
+                                    Result.NetworkError(response.url)
                                 } else {
-                                    Result.NetworkError
+                                    response.text.parseResult(query.symbol)
                                 }
                             }
                         }
-                        .onErrorReturn { Result.NetworkError }
+                        .onErrorReturn { Result.NetworkError(it.localizedMessage) }
                 }
                 queryDisposable = result.subscribeOn(Schedulers.io()).observeOn(Schedulers.single())
                     .subscribeBy(onSuccess = this::sendToClient)
@@ -52,12 +59,14 @@ class StockCatalog(private val network: HttpNetwork) {
         }
     }
 
+
     private var queryDisposable: Disposable? = null
 
     private fun sendToClient(result: Result) = client.onStockCatalogResult(result)
 
     private fun Query.FindStock.asRequest(): HttpNetwork.Request {
         val fields = listOf(
+            "quoteType",
             "symbol",
             "longName",
             "shortName",
@@ -81,6 +90,26 @@ class StockCatalog(private val network: HttpNetwork) {
             if (!it.isDisposed) {
                 it.onError(t)
             }
+        }
+    }
+
+    private fun String.parseResult(search: String): Result {
+        try {
+            val requestResponse = Klaxon().parse<FinanceRequestResponse>(this)
+            return requestResponse?.let { it ->
+                Result.Samples(
+                    search = search,
+                    samples = it.quoteResponse.result
+                        .map { financeQuote ->
+                            StockSample(
+                                symbol = financeQuote.symbol.toUpperCase().trim(),
+                                sharePrice = BigDecimal.valueOf(financeQuote.regularMarketPrice),
+                                marketCapitalization = BigDecimal.valueOf(financeQuote.marketCap)
+                            )
+                        })
+            } ?: Result.ParseError(text = this)
+        } catch (t: Throwable) {
+            return Result.ParseError(text = this, reason = t.localizedMessage)
         }
     }
 }

@@ -1,8 +1,11 @@
 package com.rubyhuntersky.lib
 
+import com.beust.klaxon.Klaxon
+import com.beust.klaxon.json
 import com.nhaarman.mockitokotlin2.*
 import org.junit.Assert.*
 import org.junit.Test
+import java.math.BigDecimal
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
@@ -19,14 +22,39 @@ class StockCatalogTest {
         }
     }
 
+    private val financeRequestResponseJson = json {
+        obj(
+            "quoteResponse" to obj(
+                "result" to array(
+                    listOf(
+                        obj(
+                            "quoteType" to "EQUITY",
+                            "sharesOutstanding" to 171732992,
+                            "regularMarketPrice" to 347.26,
+                            "shortName" to "Tesla, Inc",
+                            "longName" to "Tesla, Inc.",
+                            "marketCap" to 59635998720,
+                            "symbol" to "TSLA"
+                        )
+                    )
+                )
+            )
+        )
+    }
+    private val financeRequestResponse =
+        Klaxon().parse<FinanceRequestResponse>(financeRequestResponseJson.toJsonString())!!
+
     @Test
     fun findStockSendsRequestToNetwork() {
         val mockNetwork = mock<HttpNetwork> {}
         StockCatalog(mockNetwork).connect(client)
 
         StockCatalog.Query.FindStock("TSLA").sendToClient(client)
-        verify(mockNetwork).request(argWhere {
-            it.url == "https://query1.finance.yahoo.com/v7/finance/quote?lang=en-US&region=US&corsDomain=finance.yahoo.com&fields=symbol%2ClongName%2CshortName%2CregularMarketPrice%2CmarketCap%2CsharesOutstanding&symbols=TSLA&formatted=false"
+        verify(mockNetwork).request(check {
+            assertEquals(
+                "https://query1.finance.yahoo.com/v7/finance/quote?lang=en-US&region=US&corsDomain=finance.yahoo.com&fields=quoteType%2Csymbol%2ClongName%2CshortName%2CregularMarketPrice%2CmarketCap%2CsharesOutstanding&symbols=TSLA&formatted=false",
+                it.url
+            )
         })
     }
 
@@ -36,7 +64,7 @@ class StockCatalogTest {
         val mockNetwork = mock<HttpNetwork> {
             on { request(argThat { url.contains("ERROR") }) }.doAnswer {
                 requestLatch.await()
-                HttpNetwork.Response.ConnectionError(Exception("No network"))
+                HttpNetwork.Response.ConnectionError("url", Exception("No network"))
             }
         }
 
@@ -58,7 +86,7 @@ class StockCatalogTest {
             on { request(argThat { url.contains("TSLA") }) }.doAnswer {
                 requestStartedLatch.countDown()
                 requestEndLatch.await()
-                HttpNetwork.Response.Text("TSLA", 200)
+                HttpNetwork.Response.Text("url", financeRequestResponseJson.toJsonString(), 200)
             }
         }
 
@@ -80,12 +108,12 @@ class StockCatalogTest {
             on { request(argThat { url.contains("ERROR") }) }.doAnswer {
                 request1StartedLatch.countDown()
                 requestsEndLatch.await()
-                HttpNetwork.Response.ConnectionError(Exception("No network"))
+                HttpNetwork.Response.ConnectionError("url", Exception("No network"))
             }
             on { request(argThat { url.contains("TSLA") }) }.doAnswer {
                 request2StartedLatch.countDown()
                 requestsEndLatch.await()
-                HttpNetwork.Response.Text("TSLA", 200)
+                HttpNetwork.Response.Text("url", financeRequestResponseJson.toJsonString(), 200)
             }
         }
 
@@ -95,8 +123,21 @@ class StockCatalogTest {
         StockCatalog.Query.FindStock("TSLA").sendToClient(client)
         request2StartedLatch.await()
         requestsEndLatch.countDown()
-        if (client.resultLatch.await(1, TimeUnit.SECONDS)) {
-            assertTrue(client.results.size == 1 && client.results[0] is StockCatalog.Result.StockData)
+        if (client.resultLatch.await(1, TimeUnit.MINUTES)) {
+            assertEquals(1, client.results.size)
+            assertEquals(
+                StockCatalog.Result.Samples(
+                    search = "TSLA",
+                    samples = listOf(
+                        StockSample(
+                            symbol = "TSLA",
+                            sharePrice = BigDecimal.valueOf(financeRequestResponse.quoteResponse.result[0].regularMarketPrice),
+                            marketCapitalization = BigDecimal.valueOf(financeRequestResponse.quoteResponse.result[0].marketCap)
+                        )
+                    )
+                ),
+                client.results[0]
+            )
         } else {
             fail("No result")
         }
