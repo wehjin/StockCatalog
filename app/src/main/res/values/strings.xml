@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">StockCatalog</string>
+    <string name="stock_symbol">Stock symbol</string>
 </resources>
