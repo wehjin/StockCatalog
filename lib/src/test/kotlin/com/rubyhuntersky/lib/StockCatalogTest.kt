@@ -64,7 +64,7 @@ class StockCatalogTest {
         val mockNetwork = mock<HttpNetwork> {
             on { request(argThat { url.contains("ERROR") }) }.doAnswer {
                 requestLatch.await()
-                HttpNetwork.Response.ConnectionError("url", Exception("No network"))
+                HttpNetworkResponse.ConnectionError("url", Exception("No network"))
             }
         }
 
@@ -86,7 +86,7 @@ class StockCatalogTest {
             on { request(argThat { url.contains("TSLA") }) }.doAnswer {
                 requestStartedLatch.countDown()
                 requestEndLatch.await()
-                HttpNetwork.Response.Text("url", financeRequestResponseJson.toJsonString(), 200)
+                HttpNetworkResponse.Text("url", financeRequestResponseJson.toJsonString(), 200)
             }
         }
 
@@ -108,12 +108,12 @@ class StockCatalogTest {
             on { request(argThat { url.contains("ERROR") }) }.doAnswer {
                 request1StartedLatch.countDown()
                 requestsEndLatch.await()
-                HttpNetwork.Response.ConnectionError("url", Exception("No network"))
+                HttpNetworkResponse.ConnectionError("url", Exception("No network"))
             }
             on { request(argThat { url.contains("TSLA") }) }.doAnswer {
                 request2StartedLatch.countDown()
                 requestsEndLatch.await()
-                HttpNetwork.Response.Text("url", financeRequestResponseJson.toJsonString(), 200)
+                HttpNetworkResponse.Text("url", financeRequestResponseJson.toJsonString(), 200)
             }
         }
 
@@ -125,19 +125,20 @@ class StockCatalogTest {
         requestsEndLatch.countDown()
         if (client.resultLatch.await(1, TimeUnit.MINUTES)) {
             assertEquals(1, client.results.size)
-            assertEquals(
-                StockCatalogResult.Samples(
-                    search = "TSLA",
-                    samples = listOf(
+            val expectedSamples = StockCatalogResult.Samples(
+                search = "TSLA",
+                samples = listOf(
+                    with(financeRequestResponse.quoteResponse.result[0]) {
                         StockSample(
                             symbol = "TSLA",
-                            sharePrice = BigDecimal.valueOf(financeRequestResponse.quoteResponse.result[0].regularMarketPrice),
-                            marketCapitalization = BigDecimal.valueOf(financeRequestResponse.quoteResponse.result[0].marketCap)
+                            sharePrice = BigDecimal.valueOf(regularMarketPrice),
+                            marketCapitalization = BigDecimal.valueOf(marketCap),
+                            issuer = longName!!
                         )
-                    )
-                ),
-                client.results[0]
+                    }
+                )
             )
+            assertEquals(expectedSamples, client.results[0])
         } else {
             fail("No result")
         }
