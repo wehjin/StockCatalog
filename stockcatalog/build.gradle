@@ -1,5 +1,6 @@
 plugins {
     id 'org.jetbrains.kotlin.jvm'
+    id "com.jfrog.bintray" version "1.8.4"
 }
 apply plugin: 'java-library'
 apply plugin: 'maven-publish'
@@ -37,13 +38,17 @@ group = "com.rubyhuntersky"
 version = "1.0.0"
 
 task sourcesJar(type: Jar) {
-    from sourceSets.main.allJava
     classifier = 'sources'
+    from sourceSets.main.allSource
 }
 
 task javadocJar(type: Jar) {
-    from javadoc
     classifier = 'javadoc'
+    from javadoc.destinationDir
+}
+
+artifacts {
+    archives sourcesJar, javadocJar
 }
 
 publishing {
@@ -62,8 +67,15 @@ publishing {
     }
 }
 
-javadoc {
-    if (JavaVersion.current().isJava9Compatible()) {
-        options.addBooleanOption('html5', true)
+bintray {
+    user = bintray_user
+    key = bintray_key
+    publications = ['maven']
+    pkg {
+        repo = 'StockCatalog'
+        name = 'com.rubyhuntersky.stockcatalog'
+        version {
+            name = '1.0.0'
+        }
     }
 }
