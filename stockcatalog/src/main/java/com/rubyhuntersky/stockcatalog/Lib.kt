@@ -1,4 +1,4 @@
-package com.rubyhuntersky.lib
+package com.rubyhuntersky.stockcatalog
 
 import java.math.BigDecimal
 

@@ -1,13 +1,13 @@
-package com.rubyhuntersky.stockcatalog
+package com.rubyhuntersky.stockcatalogapp
 
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.support.v7.widget.SearchView
 import android.util.Log
-import com.rubyhuntersky.lib.StockCatalog
-import com.rubyhuntersky.lib.StockCatalogClient
-import com.rubyhuntersky.lib.StockCatalogQuery
-import com.rubyhuntersky.lib.StockCatalogResult
+import com.rubyhuntersky.stockcatalog.StockCatalog
+import com.rubyhuntersky.stockcatalog.StockCatalogClient
+import com.rubyhuntersky.stockcatalog.StockCatalogQuery
+import com.rubyhuntersky.stockcatalog.StockCatalogResult
 import kotlinx.android.synthetic.main.activity_stock_search.*
 
 class StockSearchActivity : AppCompatActivity(), StockCatalogClient {

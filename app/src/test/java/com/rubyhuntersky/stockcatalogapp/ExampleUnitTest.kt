@@ -1,4 +1,4 @@
-package com.rubyhuntersky.stockcatalog
+package com.rubyhuntersky.stockcatalogapp
 
 import org.junit.Test
 

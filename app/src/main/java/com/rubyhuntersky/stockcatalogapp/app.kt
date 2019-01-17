@@ -1,8 +1,8 @@
-package com.rubyhuntersky.stockcatalog
+package com.rubyhuntersky.stockcatalogapp
 
-import com.rubyhuntersky.lib.HttpNetwork
-import com.rubyhuntersky.lib.HttpNetworkRequest
-import com.rubyhuntersky.lib.HttpNetworkResponse
+import com.rubyhuntersky.stockcatalog.HttpNetwork
+import com.rubyhuntersky.stockcatalog.HttpNetworkRequest
+import com.rubyhuntersky.stockcatalog.HttpNetworkResponse
 import okhttp3.OkHttpClient
 import okhttp3.Request
 

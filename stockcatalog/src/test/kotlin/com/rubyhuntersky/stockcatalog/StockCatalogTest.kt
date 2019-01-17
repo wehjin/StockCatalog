@@ -1,4 +1,4 @@
-package com.rubyhuntersky.lib
+package com.rubyhuntersky.stockcatalog
 
 import com.beust.klaxon.Klaxon
 import com.beust.klaxon.json
