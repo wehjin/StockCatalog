@@ -5,7 +5,6 @@ import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.rxkotlin.addTo
 import io.reactivex.rxkotlin.subscribeBy
 import io.reactivex.schedulers.Schedulers
-import java.math.BigDecimal
 
 class StockCatalog(private val network: HttpNetwork) {
 
@@ -49,24 +48,14 @@ class StockCatalog(private val network: HttpNetwork) {
     private var queries = CompositeDisposable()
 
     private fun getCatalogResultFromResponseText(responseText: String, searchText: String): StockCatalogResult {
-        try {
-            val financeRequestResponse = FinanceApi.parseResponseText(responseText)
-            return if (financeRequestResponse == null) {
-                StockCatalogResult.ParseError(text = responseText)
-            } else {
-                StockCatalogResult.Samples(
-                    search = searchText,
-                    samples = financeRequestResponse.quoteResponse.result.map { financeQuote ->
-                        StockSample(
-                            symbol = financeQuote.symbol.toUpperCase().trim(),
-                            sharePrice = BigDecimal.valueOf(financeQuote.regularMarketPrice),
-                            marketCapitalization = BigDecimal.valueOf(financeQuote.marketCap),
-                            issuer = financeQuote.longName ?: financeQuote.shortName
-                        )
-                    })
-            }
+        return try {
+            FinanceApi.parseResponseText(responseText)
+                ?.let {
+                    StockCatalogResult.Samples(searchText, it.toStockSampleList())
+                }
+                ?: StockCatalogResult.ParseError(responseText)
         } catch (t: Throwable) {
-            return StockCatalogResult.ParseError(text = responseText, reason = t.localizedMessage)
+            StockCatalogResult.ParseError(responseText, t.localizedMessage)
         }
     }
 

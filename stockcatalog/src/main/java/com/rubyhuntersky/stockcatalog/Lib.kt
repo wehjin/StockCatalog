@@ -29,3 +29,15 @@ data class StockSample(
     val marketCapitalization: BigDecimal,
     val issuer: String
 )
+
+
+internal fun FinanceRequestResponse.toStockSampleList(): List<StockSample> {
+    return quoteResponse.result.map { financeQuote ->
+        StockSample(
+            symbol = financeQuote.symbol.toUpperCase().trim(),
+            sharePrice = BigDecimal.valueOf(financeQuote.regularMarketPrice),
+            marketCapitalization = BigDecimal.valueOf(financeQuote.marketCap),
+            issuer = financeQuote.longName ?: financeQuote.shortName
+        )
+    }
+}

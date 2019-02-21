@@ -4,7 +4,11 @@ import com.beust.klaxon.Klaxon
 
 internal object FinanceApi {
 
-    fun getFindStockHttpNetworkRequest(symbol: String): HttpNetworkRequest {
+    fun getFindStockHttpNetworkRequest(symbol: String): HttpNetworkRequest =
+        getQuotesHttpNetworkRequest(listOf(symbol))
+
+    fun getQuotesHttpNetworkRequest(symbolList: List<String>): HttpNetworkRequest {
+        val symbols = symbolList.joinToString("%2C", transform = String::trim)
         val fields = listOf(
             "quoteType",
             "symbol",
@@ -15,7 +19,7 @@ internal object FinanceApi {
             "sharesOutstanding"
         ).joinToString("%2C")
         val params =
-            "lang=en-US&region=US&corsDomain=finance.yahoo.com&fields=$fields&symbols=${symbol.trim()}&formatted=false"
+            "lang=en-US&region=US&corsDomain=finance.yahoo.com&fields=$fields&symbols=$symbols&formatted=false"
         val url = "https://query1.finance.yahoo.com/v7/finance/quote?$params"
         return HttpNetworkRequest(url)
     }

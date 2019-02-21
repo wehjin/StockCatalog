@@ -12,8 +12,8 @@ repositories {
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
-    implementation 'io.reactivex.rxjava2:rxkotlin:2.3.0'
     implementation 'com.beust:klaxon:5.0.1'
+    api 'io.reactivex.rxjava2:rxkotlin:2.3.0'
     api "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
     api "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
     testImplementation 'junit:junit:4.12'
