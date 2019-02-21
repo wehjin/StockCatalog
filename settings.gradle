@@ -1,1 +1,1 @@
-include ':app', ':stockcatalog'
+include ':stockcatalog-app', ':stockcatalog'
