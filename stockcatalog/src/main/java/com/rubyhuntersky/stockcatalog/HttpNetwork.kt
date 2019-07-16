@@ -2,6 +2,7 @@ package com.rubyhuntersky.stockcatalog
 
 import io.reactivex.Single
 
+
 interface HttpNetwork {
     fun request(request: HttpNetworkRequest): HttpNetworkResponse
 }

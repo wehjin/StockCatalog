@@ -6,7 +6,8 @@ group = "com.github.wehjin"
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
-    implementation 'com.beust:klaxon:5.0.1'
+    implementation 'com.beust:klaxon:5.0.7'
+    api 'io.reactivex.rxjava2:rxjava:2.2.10'
     api 'io.reactivex.rxjava2:rxkotlin:2.3.0'
     api "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
     api "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
