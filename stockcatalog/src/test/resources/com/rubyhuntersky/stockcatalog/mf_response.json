@@ -1,0 +1,28 @@
+{
+  "quoteResponse": {
+    "result": [
+      {
+        "language": "en-US",
+        "region": "US",
+        "quoteType": "MUTUALFUND",
+        "marketState": "PREPRE",
+        "exchange": "YHD",
+        "esgPopulated": false,
+        "tradeable": false,
+        "triggerable": false,
+        "market": "us_market",
+        "regularMarketTime": 1561759658,
+        "fullExchangeName": "YHD",
+        "sourceInterval": 15,
+        "exchangeTimezoneName": "America/New_York",
+        "exchangeTimezoneShortName": "EDT",
+        "gmtOffSetMilliseconds": -14400000,
+        "shortName": "117949",
+        "exchangeDataDelayedBy": 0,
+        "priceHint": 2,
+        "symbol": "ARK"
+      }
+    ],
+    "error": null
+  }
+}

@@ -131,8 +131,8 @@ class StockCatalogTest {
                     with(financeRequestResponse.quoteResponse.result[0]) {
                         StockSample(
                             symbol = "TSLA",
-                            sharePrice = BigDecimal.valueOf(regularMarketPrice),
-                            marketCapitalization = BigDecimal.valueOf(marketCap),
+                            sharePrice = BigDecimal.valueOf(regularMarketPrice!!),
+                            marketWeight = MarketWeight.Capitalization(BigDecimal.valueOf(marketCap!!)),
                             issuer = longName!!
                         )
                     }

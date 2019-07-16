@@ -20,22 +20,23 @@ class StockCatalog(private val network: HttpNetwork) {
         when (query) {
             is StockCatalogQuery.Clear -> Unit
             is StockCatalogQuery.FindStock -> {
-                val catalogResultSingle = if (query.symbol.isBlank()) {
-                    Single.just(StockCatalogResult.InvalidSymbol(query.symbol) as StockCatalogResult)
-                } else {
-                    network.getRequestSingle(FinanceApi.getFindStockHttpNetworkRequest(query.symbol))
-                        .map { response ->
-                            when (response) {
-                                is HttpNetworkResponse.ConnectionError -> StockCatalogResult.NetworkError(response.url)
-                                is HttpNetworkResponse.Text -> if (response.httpCode != 200) {
-                                    StockCatalogResult.NetworkError(response.url)
-                                } else {
-                                    getCatalogResultFromResponseText(response.text, query.symbol)
+                val catalogResultSingle =
+                    if (query.symbol.isBlank()) {
+                        Single.just(StockCatalogResult.InvalidSymbol(query.symbol) as StockCatalogResult)
+                    } else {
+                        network.getRequestSingle(FinanceApi.getFindStockHttpNetworkRequest(query.symbol))
+                            .map { response ->
+                                when (response) {
+                                    is HttpNetworkResponse.ConnectionError -> StockCatalogResult.NetworkError(response.url)
+                                    is HttpNetworkResponse.Text -> if (response.httpCode != 200) {
+                                        StockCatalogResult.NetworkError(response.url)
+                                    } else {
+                                        getCatalogResultFromResponseText(response.text, query.symbol)
+                                    }
                                 }
                             }
-                        }
-                        .onErrorReturn { StockCatalogResult.NetworkError(it.localizedMessage) }
-                }
+                            .onErrorReturn { StockCatalogResult.NetworkError(it.localizedMessage) }
+                    }
                 catalogResultSingle
                     .subscribeOn(Schedulers.io())
                     .observeOn(Schedulers.single())

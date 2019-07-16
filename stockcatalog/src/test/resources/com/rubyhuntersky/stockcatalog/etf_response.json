@@ -1,0 +1,57 @@
+{
+  "quoteResponse": {
+    "result": [
+      {
+        "language": "en-US",
+        "region": "US",
+        "quoteType": "EQUITY",
+        "currency": "USD",
+        "sharesOutstanding": 69000000,
+        "marketCap": 916837504,
+        "market": "us_market",
+        "exchange": "NYQ",
+        "shortName": "Social Capital Hedosophia Holdi",
+        "exchangeDataDelayedBy": 0,
+        "regularMarketPrice": 10.63,
+        "regularMarketTime": 1562961722,
+        "fullExchangeName": "NYSE",
+        "longName": "Social Capital Hedosophia Holdings Corp.",
+        "esgPopulated": false,
+        "tradeable": true,
+        "triggerable": true,
+        "priceHint": 2,
+        "sourceInterval": 15,
+        "exchangeTimezoneName": "America/New_York",
+        "exchangeTimezoneShortName": "EDT",
+        "gmtOffSetMilliseconds": -14400000,
+        "marketState": "CLOSED",
+        "symbol": "IPOA"
+      },
+      {
+        "language": "en-US",
+        "region": "US",
+        "quoteType": "ETF",
+        "currency": "USD",
+        "market": "us_market",
+        "exchange": "PCX",
+        "shortName": "ARK Innovation ETF",
+        "exchangeDataDelayedBy": 0,
+        "regularMarketPrice": 48.46,
+        "regularMarketTime": 1562961600,
+        "fullExchangeName": "NYSEArca",
+        "longName": "ARK Innovation ETF",
+        "esgPopulated": false,
+        "tradeable": true,
+        "triggerable": false,
+        "priceHint": 2,
+        "sourceInterval": 15,
+        "exchangeTimezoneName": "America/New_York",
+        "exchangeTimezoneShortName": "EDT",
+        "gmtOffSetMilliseconds": -14400000,
+        "marketState": "CLOSED",
+        "symbol": "ARKK"
+      }
+    ],
+    "error": null
+  }
+}

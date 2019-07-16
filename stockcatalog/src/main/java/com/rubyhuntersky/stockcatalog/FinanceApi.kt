@@ -28,15 +28,16 @@ internal object FinanceApi {
         Klaxon().parse<FinanceRequestResponse>(responseText)
 }
 
+internal data class FinanceRequestResponse(val quoteResponse: FinanceQuoteResponse)
+
+internal data class FinanceQuoteResponse(val result: List<FinanceQuote>)
+
 internal data class FinanceQuote(
     val quoteType: String,
     val symbol: String,
-    val longName: String?,
+    val longName: String? = null,
     val shortName: String,
-    val regularMarketPrice: Double,
-    val marketCap: Long,
-    val sharesOutstanding: Long
+    val regularMarketPrice: Double? = null,
+    val marketCap: Long? = null,
+    val sharesOutstanding: Long? = null
 )
-
-internal data class FinanceQuoteResponse(val result: List<FinanceQuote>)
-internal data class FinanceRequestResponse(val quoteResponse: FinanceQuoteResponse)
