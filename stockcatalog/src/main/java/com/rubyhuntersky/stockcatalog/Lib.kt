@@ -26,18 +26,31 @@ sealed class StockCatalogResult {
 data class StockSample(
     val symbol: String,
     val sharePrice: BigDecimal,
-    val marketCapitalization: BigDecimal,
+    val marketWeight: MarketWeight,
     val issuer: String
 )
 
-
-internal fun FinanceRequestResponse.toStockSampleList(): List<StockSample> {
-    return quoteResponse.result.map { financeQuote ->
-        StockSample(
-            symbol = financeQuote.symbol.toUpperCase().trim(),
-            sharePrice = BigDecimal.valueOf(financeQuote.regularMarketPrice),
-            marketCapitalization = BigDecimal.valueOf(financeQuote.marketCap),
-            issuer = financeQuote.longName ?: financeQuote.shortName
-        )
-    }
+sealed class MarketWeight {
+    data class Capitalization(val marketCapitalization: BigDecimal) : MarketWeight()
+    object None : MarketWeight()
 }
+
+internal fun FinanceRequestResponse.toStockSampleList(): List<StockSample> =
+    quoteResponse.result
+        .filter { it.regularMarketPrice != null }
+        .map { financeQuote ->
+            StockSample(
+                symbol = financeQuote.symbol.toUpperCase().trim(),
+                sharePrice = financeQuote.regularMarketPrice!!.toBigDecimal(),
+                marketWeight = financeQuote.marketWeight,
+                issuer = financeQuote.longName ?: financeQuote.shortName
+            )
+        }
+
+private val FinanceQuote.marketWeight
+    get() =
+        when (quoteType) {
+            "ETF" -> MarketWeight.None
+            "MUTUALFUND" -> MarketWeight.None
+            else -> MarketWeight.Capitalization(marketCap!!.toBigDecimal())
+        }

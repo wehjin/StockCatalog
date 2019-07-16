@@ -27,13 +27,13 @@ class StockMarketTest {
                     StockSample(
                         symbol = "TSLA",
                         sharePrice = BigDecimal("302.56"),
-                        marketCapitalization = BigDecimal("52258463744"),
+                        marketWeight = MarketWeight.Capitalization(BigDecimal("52258463744")),
                         issuer = "Tesla, Inc."
                     ),
                     StockSample(
                         symbol = "NVDA",
                         sharePrice = BigDecimal("158.55"),
-                        marketCapitalization = BigDecimal("96715505664"),
+                        marketWeight = MarketWeight.Capitalization(BigDecimal("96715505664")),
                         issuer = "NVIDIA Corporation"
                     )
                 )
