@@ -1,6 +1,7 @@
 package com.rubyhuntersky.stockcatalog
 
 import java.math.BigDecimal
+import java.util.*
 
 
 interface StockCatalogClient {
@@ -40,7 +41,7 @@ internal fun FinanceRequestResponse.toStockSampleList(): List<StockSample> =
         .filter { it.regularMarketPrice != null }
         .map { financeQuote ->
             StockSample(
-                symbol = financeQuote.symbol.toUpperCase().trim(),
+                symbol = financeQuote.symbol.toUpperCase(Locale.ROOT).trim(),
                 sharePrice = financeQuote.regularMarketPrice!!.toBigDecimal(),
                 marketWeight = financeQuote.marketWeight,
                 issuer = financeQuote.longName ?: financeQuote.shortName
@@ -52,5 +53,6 @@ private val FinanceQuote.marketWeight
         when (quoteType) {
             "ETF" -> MarketWeight.None
             "MUTUALFUND" -> MarketWeight.None
+            "CURRENCY" -> MarketWeight.None
             else -> MarketWeight.Capitalization(marketCap!!.toBigDecimal())
         }
