@@ -1,0 +1,32 @@
+{
+  "quoteResponse": {
+    "result": [
+      {
+        "language": "en-US",
+        "region": "US",
+        "quoteType": "EQUITY",
+        "quoteSourceName": "Delayed Quote",
+        "triggerable": true,
+        "currency": "USD",
+        "exchange": "NYQ",
+        "shortName": "Social Capital Hedosophia Holdi",
+        "longName": "Social Capital Hedosophia Holdings Corp. III",
+        "exchangeTimezoneName": "America/New_York",
+        "exchangeTimezoneShortName": "EDT",
+        "gmtOffSetMilliseconds": -14400000,
+        "market": "us_market",
+        "esgPopulated": false,
+        "marketState": "REGULAR",
+        "sourceInterval": 15,
+        "exchangeDataDelayedBy": 0,
+        "tradeable": false,
+        "priceHint": 2,
+        "regularMarketTime": 1589471043,
+        "regularMarketPrice": 10.39,
+        "fullExchangeName": "NYSE",
+        "symbol": "IPOC-UN"
+      }
+    ],
+    "error": null
+  }
+}

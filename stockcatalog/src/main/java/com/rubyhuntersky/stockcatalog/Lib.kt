@@ -49,10 +49,11 @@ internal fun FinanceRequestResponse.toStockSampleList(): List<StockSample> =
         }
 
 private val FinanceQuote.marketWeight
-    get() =
-        when (quoteType) {
-            "ETF" -> MarketWeight.None
-            "MUTUALFUND" -> MarketWeight.None
-            "CURRENCY" -> MarketWeight.None
-            else -> MarketWeight.Capitalization(marketCap!!.toBigDecimal())
-        }
+    get() = when (quoteType) {
+        "ETF" -> MarketWeight.None
+        "MUTUALFUND" -> MarketWeight.None
+        "CURRENCY" -> MarketWeight.None
+        else -> marketCap
+            ?.let { MarketWeight.Capitalization(it.toBigDecimal()) }
+            ?: MarketWeight.None
+    }
